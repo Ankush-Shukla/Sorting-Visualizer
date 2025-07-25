@@ -28,23 +28,14 @@ int main() {
 
     std::vector<sf::RectangleShape> rectangles = draw_rectangles(arr.data(), n, win_width, win_height);
 
-    sf::RectangleShape startButton({ 100, 50 });
-    startButton.setFillColor(sf::Color::White);
-    startButton.setPosition({ win_width / 2 - 50, win_height - 580 });
-
+    // Load font
     sf::Font font;
     if (!font.openFromFile("arial.ttf")) {
-        std::cerr << "Error: Could not load font file 'arial.ttf'. Please ensure the file exists in the working directory.\n";
+        std::cerr << "Error: Could not load font file 'arial.ttf'. Please ensure the file exists.\n";
         return -1;
     }
 
-    // Start button label
-    sf::Text startText(font);
-    startText.setString("Start");
-    startText.setCharacterSize(26);
-    startText.setFillColor(sf::Color::Black);
-    startText.setPosition({ win_width / 2 - 30, win_height - 570 });
-
+    // Sound
     sf::SoundBuffer beepBuffer;
     if (!loadBeepSound(beepBuffer, "beep.wav")) {
         std::cerr << "Failed to load beep.wav. Exiting.\n";
@@ -53,178 +44,165 @@ int main() {
     sf::Sound sortingSound(beepBuffer);
 
     bool sortingStarted = false;
-    bool barsVisible = false; // Add this flag
+    bool barsVisible = false;
     SortType selectedSort = SortType::Bubble;
 
-    // Sorting algorithm selection buttons
+    // --- Start Button ---
+// Buttons: Start, Randomize
+    sf::RectangleShape startButton({ 120, 40 });
+    startButton.setPosition({ win_width / 2 - 120 , 20 });
+    startButton.setFillColor(sf::Color::White);
+    startButton.setOutlineThickness(2);
+    startButton.setOutlineColor(sf::Color(100, 200, 255));
+
+    sf::Text startText(font);
+    startText.setString("Start");
+    startText.setCharacterSize(22);
+    startText.setFillColor(sf::Color::Black);
+    startText.setPosition({ startButton.getPosition().x + 30, startButton.getPosition().y + 8 });
+
+    sf::RectangleShape randomButton({ 120, 40 });
+    randomButton.setPosition({ win_width / 2 + 10 , 20 });
+    randomButton.setFillColor(sf::Color(200, 255, 200));
+    randomButton.setOutlineThickness(2);
+    randomButton.setOutlineColor(sf::Color::Green);
+
+    sf::Text randomText(font);
+    randomText.setString("Randomize");
+    randomText.setCharacterSize(18);
+    randomText.setFillColor(sf::Color::Black);
+
+    randomText.setPosition({ randomButton.getPosition().x + 10, randomButton.getPosition().y + 10 });
+
+
+    // --- Sorting algorithm buttons (bottom row) ---
     std::vector<std::pair<sf::RectangleShape, sf::Text>> sortButtons;
     std::vector<std::string> sortNames = { "Bubble", "Selection", "Insertion", "Merge" };
+    float buttonWidth = 150.f;
+    float buttonHeight = 40.f;
+    float spacing = 20.f;
+    float totalWidth = 4 * buttonWidth + 3 * spacing;
+    float xStart = (win_width - totalWidth) / 2;
+    float yBottom = win_height - 70;
+
     for (int i = 0; i < 4; ++i) {
-        sf::RectangleShape btn({ 120, 40 });
-        btn.setFillColor(sf::Color(200, 200, 200));
-        btn.setPosition({ win_width / 2 - 60, win_height - 520 + i * 60 });
+        sf::RectangleShape btn({ buttonWidth, buttonHeight });
+        btn.setFillColor(sf::Color(220, 220, 220));
+        btn.setPosition({ xStart + i * (buttonWidth + spacing), yBottom });
+
         sf::Text txt(font);
         txt.setString(sortNames[i] + " Sort");
-        txt.setCharacterSize(22);
+        txt.setCharacterSize(20);
         txt.setFillColor(sf::Color::Black);
-        txt.setPosition({ win_width / 2 - 50, win_height - 510 + i * 60 });
+        txt.setPosition({ btn.getPosition().x + 15, btn.getPosition().y + 8 });
+
         sortButtons.emplace_back(btn, txt);
     }
 
-    // Reset button
-    sf::RectangleShape resetButton({ 100, 40 });
-    resetButton.setFillColor(sf::Color(220, 220, 220));
-    resetButton.setPosition({ win_width / 2 - 50, win_height - 280 });
-    sf::Text resetText(font);
-    resetText.setString("Reset");
-    resetText.setCharacterSize(22);
-    resetText.setFillColor(sf::Color::Black);
-    resetText.setPosition({ win_width / 2 - 30, win_height - 270 });
-
-    // Array size controls
-    sf::RectangleShape plusSizeBtn({ 30, 30 });
-    plusSizeBtn.setFillColor(sf::Color(180, 255, 180));
-    plusSizeBtn.setPosition({ win_width - 160, 20 });
-    sf::Text plusSizeText(font);
-    plusSizeText.setString("+");
-    plusSizeText.setCharacterSize(18);
-    plusSizeText.setFillColor(sf::Color::Black);
-    plusSizeText.setPosition({ win_width - 152, 18 });
-
-    sf::RectangleShape minusSizeBtn({ 30, 30 });
-    minusSizeBtn.setFillColor(sf::Color(255, 180, 180));
-    minusSizeBtn.setPosition({ win_width - 200, 20 });
-    sf::Text minusSizeText(font);
-    minusSizeText.setString("-");
-    minusSizeText.setCharacterSize(18);
-    minusSizeText.setFillColor(sf::Color::Black);
-    minusSizeText.setPosition({ win_width - 192, 18 });
-
-    sf::Text sizeLabel(font);
-    sizeLabel.setString("Size: " + std::to_string(n));
-    sizeLabel.setCharacterSize(18);
-    sizeLabel.setFillColor(sf::Color::Black);
-    sizeLabel.setPosition({ win_width - 250, 22 });
-
-    // Speed controls
-    sf::RectangleShape plusSpeedBtn({ 30, 30 });
-    plusSpeedBtn.setFillColor(sf::Color(180, 180, 255));
-    plusSpeedBtn.setPosition({ win_width - 160, 60 });
-    sf::Text plusSpeedText(font);
-    plusSpeedText.setString("+");
-    plusSpeedText.setCharacterSize(18);
-    plusSpeedText.setFillColor(sf::Color::Black);
-    plusSpeedText.setPosition({ win_width - 152, 58 });
-
-    sf::RectangleShape minusSpeedBtn({ 30, 30 });
-    minusSpeedBtn.setFillColor(sf::Color(255, 220, 180));
-    minusSpeedBtn.setPosition({ win_width - 200, 60 });
-    sf::Text minusSpeedText(font);
-    minusSpeedText.setString("-");
-    minusSpeedText.setCharacterSize(18);
-    minusSpeedText.setFillColor(sf::Color::Black);
-    minusSpeedText.setPosition({ win_width - 192, 58 });
-
-    sf::Text speedLabel(font);
-    speedLabel.setString("Speed: " + std::to_string(speed));
-    speedLabel.setCharacterSize(18);
-    speedLabel.setFillColor(sf::Color::Black);
-    speedLabel.setPosition({ win_width - 250, 62 });
-
-    // Slider settings
+    // --- Sliders (center of window) ---
     float sliderWidth = 300.f;
     float sliderHeight = 8.f;
-    float sliderY1 = win_height - 60;
-    float sliderY2 = win_height - 30;
-    float knobRadius = 12.f;
+    float sliderKnobRadius = 12.f;
+    float sliderCenterY = win_height / 2.f;
+    float sliderCenterX = win_width / 2.f;
 
-    // For dragging
+    const float sliderX = sliderCenterX - sliderWidth / 2.f; // LEFT EDGE (use everywhere)
+    const float sizeY = sliderCenterY - 40.f;
+    const float speedY = sliderCenterY + 40.f;
+    // Size
+    sf::RectangleShape sizeSliderBg({ sliderWidth, sliderHeight });
+    sizeSliderBg.setFillColor(sf::Color(80, 80, 120));
+    sizeSliderBg.setPosition({ sliderX, sizeY });
+
+    sf::Text sizeSliderLabel(font);
+    sizeSliderLabel.setCharacterSize(18);
+    sizeSliderLabel.setFillColor(sf::Color::White);
+    sizeSliderLabel.setPosition({ sliderX, sizeY - 30 });
+
+    sf::CircleShape sizeKnob(sliderKnobRadius);
+    sizeKnob.setFillColor(sf::Color(100, 200, 255));
+    sizeKnob.setOrigin({ sliderKnobRadius, sliderKnobRadius });
+
+    // Speed
+    sf::RectangleShape speedSliderBg({ sliderWidth, sliderHeight });
+    speedSliderBg.setFillColor(sf::Color(80, 80, 120));
+    speedSliderBg.setPosition({ sliderX, speedY });
+
+    sf::Text speedSliderLabel(font);
+    speedSliderLabel.setCharacterSize(18);
+    speedSliderLabel.setFillColor(sf::Color::White);
+    speedSliderLabel.setPosition({ sliderX, speedY - 30 });
+
+    sf::CircleShape speedKnob(sliderKnobRadius);
+    speedKnob.setFillColor(sf::Color(180, 120, 255));
+    speedKnob.setOrigin({ sliderKnobRadius, sliderKnobRadius });
+
     bool draggingSize = false, draggingSpeed = false;
 
-    // Helper to get value from slider position
-    auto sliderValue = [](float pos, float min, float max, float x, float width) {
-        float t = std::clamp((pos - x) / width, 0.f, 1.f);
+    auto sliderValue = [](float pos, float min, float max, float width) {
+        float t = std::clamp(pos / width, 0.f, 1.f);
         return static_cast<int>(min + t * (max - min));
-    };
+        };
 
     while (window.isOpen()) {
-        // Modern SFML 3.x event loop
-        while (const std::optional event = window.pollEvent()) {
-            // Window closed or escape key pressed: exit
-            if (event->is<sf::Event::Closed>() ||
-                (event->is<sf::Event::KeyPressed>() &&
-                 event->getIf<sf::Event::KeyPressed>()->code == sf::Keyboard::Key::Escape)) {
-                window.close();
-            }
+        while (auto event = window.pollEvent()) {
 
-            // Mouse button pressed
-            if (const auto* mouse = event->getIf<sf::Event::MouseButtonPressed>()) {
-                if (mouse->button == sf::Mouse::Button::Left) {
-                    sf::Vector2i mousePos = sf::Mouse::getPosition(window);
-                    for (int i = 0; i < 4; ++i) {
-                        if (sortButtons[i].first.getGlobalBounds().contains({ static_cast<float>(mousePos.x), static_cast<float>(mousePos.y) })) {
-                            selectedSort = static_cast<SortType>(i + 1);
-                        }
-                    }
-                    if (startButton.getGlobalBounds().contains({ static_cast<float>(mousePos.x), static_cast<float>(mousePos.y) })) {
+            if (event->is<sf::Event::Closed>()){ window.close(); return 0; };
+
+            if (const auto* m = event->getIf<sf::Event::MouseButtonPressed>()) {
+                if (m->button == sf::Mouse::Button::Left) {
+                    sf::Vector2f mousePos = window.mapPixelToCoords(sf::Mouse::getPosition(window));
+
+                    // Handle button clicks
+                    if (startButton.getGlobalBounds().contains(mousePos)) {
                         sortingStarted = true;
                     }
-                    if (resetButton.getGlobalBounds().contains({ static_cast<float>(mousePos.x), static_cast<float>(mousePos.y) })) {
+
+                    if (randomButton.getGlobalBounds().contains(mousePos)) {
+                        // Random array size
+                        n = min_n + rand() % (max_n - min_n + 1);
+
+                        // Random speed
+                        speed = min_speed + rand() % (max_speed - min_speed + 1);
+
+                        // Random sorting algorithm
+                        selectedSort = static_cast<SortType>(1 + rand() % 4);  // values from 1 to 4
+
+                        // Re-generate array and update visuals
                         arr = rand_array(n);
                         rectangles = draw_rectangles(arr.data(), n, win_width, win_height);
-                        barsVisible = false; // Hide bars again on reset
+                        barsVisible = false;
                     }
-                    if (plusSizeBtn.getGlobalBounds().contains({ static_cast<float>(mousePos.x), static_cast<float>(mousePos.y) })) {
-                        if (n < max_n) {
-                            ++n;
-                            arr = rand_array(n);
-                            rectangles = draw_rectangles(arr.data(), n, win_width, win_height);
-                            barsVisible = false;
+
+                    // Sorting algorithm buttons
+                    for (int i = 0; i < 4; ++i) {
+                        if (sortButtons[i].first.getGlobalBounds().contains(mousePos)) {
+                            selectedSort = static_cast<SortType>(i + 1);
+                            break;
                         }
                     }
-                    if (minusSizeBtn.getGlobalBounds().contains({ static_cast<float>(mousePos.x), static_cast<float>(mousePos.y) })) {
-                        if (n > min_n) {
-                            --n;
-                            arr = rand_array(n);
-                            rectangles = draw_rectangles(arr.data(), n, win_width, win_height);
-                            barsVisible = false;
-                        }
-                    }
-                    if (plusSpeedBtn.getGlobalBounds().contains({ static_cast<float>(mousePos.x), static_cast<float>(mousePos.y) })) {
-                        if (speed < max_speed) {
-                            speed += 5;
-                        }
-                    }
-                    if (minusSpeedBtn.getGlobalBounds().contains({ static_cast<float>(mousePos.x), static_cast<float>(mousePos.y) })) {
-                        if (speed > min_speed) {
-                            speed -= 5;
-                        }
-                    }
-                    // Size slider knob
-                    float sizeKnobX = 80 + ((n - min_n) / float(max_n - min_n)) * sliderWidth;
-                    if (std::hypot(mousePos.x - (80 + sizeKnobX), mousePos.y - sliderY1) < knobRadius + 2)
+
+                    // knob hit-tests
+                    if (std::hypot(mousePos.x - sizeKnob.getPosition().x,
+                        mousePos.y - sizeKnob.getPosition().y) < sliderKnobRadius + 2)
                         draggingSize = true;
-                    // Speed slider knob
-                    float speedKnobX = 80 + ((speed - min_speed) / float(max_speed - min_speed)) * sliderWidth;
-                    if (std::hypot(mousePos.x - (80 + speedKnobX), mousePos.y - sliderY2) < knobRadius + 2)
+
+                    if (std::hypot(mousePos.x - speedKnob.getPosition().x,
+                        mousePos.y - speedKnob.getPosition().y) < sliderKnobRadius + 2)
                         draggingSpeed = true;
                 }
             }
 
-            // Mouse button released
-            if (const auto* mouse = event->getIf<sf::Event::MouseButtonReleased>()) {
-                if (mouse->button == sf::Mouse::Button::Left) {
-                    draggingSize = draggingSpeed = false;
-                }
+            if (event->is<sf::Event::MouseButtonReleased>()) {
+                draggingSize = draggingSpeed = false;
             }
 
-            // Mouse moved
-            if (const auto* mouse = event->getIf<sf::Event::MouseMoved>()) {
-                sf::Vector2i mousePos(mouse->position.x, mouse->position.y);
+            if (const auto* mm = event->getIf<sf::Event::MouseMoved>()) {
+                sf::Vector2f m(mm->position.x, mm->position.y);
+
                 if (draggingSize) {
-                    // Calculate relative mouse X to slider start
-                    float pos = std::clamp(float(mousePos.x) - 80.0f, 0.0f, sliderWidth);
-                    int new_n = sliderValue(pos, min_n, max_n, 0, sliderWidth);
+                    float relX = std::clamp(m.x - sliderX, 0.f, sliderWidth);
+                    int new_n = sliderValue(relX, min_n, max_n, sliderWidth);
                     if (new_n != n) {
                         n = new_n;
                         arr = rand_array(n);
@@ -232,159 +210,53 @@ int main() {
                         barsVisible = false;
                     }
                 }
-                if (draggingSpeed) {
-                    float pos = std::clamp(float(mousePos.x) - 80.0f, 0.0f, sliderWidth);
-                    int new_speed = sliderValue(pos, min_speed, max_speed, 0, sliderWidth);
-                    if (new_speed != speed) {
-                        speed = new_speed;
-                    }
-                }
-            }
 
-            // Mouse wheel scrolled
-            if (event->is<sf::Event::MouseWheelScrolled>()) {
-                if (event->getIf<sf::Event::MouseWheelScrolled>()->delta > 0) {
-                    if (n < max_n) {
-                        ++n;
-                        arr = rand_array(n);
-                        rectangles = draw_rectangles(arr.data(), n, win_width, win_height);
-                        barsVisible = false;
-                    }
-                }
-                else {
-                    if (n > min_n) {
-                        --n;
-                        arr = rand_array(n);
-                        rectangles = draw_rectangles(arr.data(), n, win_width, win_height);
-                        barsVisible = false;
-                    }
+                if (draggingSpeed) {
+                    float relX = std::clamp(m.x - sliderX, 0.f, sliderWidth);
+                    int new_speed = sliderValue(relX, min_speed, max_speed, sliderWidth);
+                    if (new_speed != speed) speed = new_speed;
                 }
             }
         }
 
-        window.clear(sf::Color(20, 20, 30));
+        // Update slider knob positions
+        float t_size = float(n - min_n) / float(max_n - min_n);
+        float sizeX = sliderX + t_size * sliderWidth;
+        sizeKnob.setPosition({ sizeX, sizeY + sliderHeight / 2.f });
 
-        // --- Draw UI panels and controls (unchanged) ---
-        sf::RectangleShape controlPanel({ 320, 420 });
-        controlPanel.setFillColor(sf::Color(40, 40, 60, 220));
-        controlPanel.setOutlineColor(sf::Color(100, 200, 255, 180));
-        controlPanel.setOutlineThickness(2);
-        controlPanel.setPosition({ win_width / 2 - 160, 40 });
-        window.draw(controlPanel);
+        float t_speed = float(speed - min_speed) / float(max_speed - min_speed);
+        float speedX = sliderX + t_speed * sliderWidth;
+        speedKnob.setPosition({ speedX, speedY + sliderHeight / 2.f });
 
-        sf::Text title(font);
-        title.setString("Sorting Visualizer");
-        title.setCharacterSize(32);
-        title.setFillColor(sf::Color(100, 200, 255));
-        title.setStyle(sf::Text::Bold);
-        title.setPosition({ win_width / 2 - title.getLocalBounds().size.x / 2, 55 });
-        window.draw(title);
+        // --- DRAWING ---
+        window.clear(sf::Color(0, 0, 0));
 
-        startButton.setSize({ 180, 50 });
-        startButton.setPosition({ win_width / 2 - 90, 110 });
-        startButton.setFillColor(sf::Color(255, 255, 255, 230));
-        startButton.setOutlineThickness(2);
-        startButton.setOutlineColor(sf::Color(100, 200, 255));
         window.draw(startButton);
-
-        startText.setFillColor(sf::Color(30, 30, 30));
-        startText.setPosition({ win_width / 2 - 40, 122 });
         window.draw(startText);
+
+        window.draw(randomButton);
+        window.draw(randomText);
+
+        sizeSliderLabel.setString("Array Size: " + std::to_string(n));
+        window.draw(sizeSliderBg);
+        window.draw(sizeSliderLabel);
+        window.draw(sizeKnob);
+
+        speedSliderLabel.setString("Speed (low = fast): " + std::to_string(speed));
+        window.draw(speedSliderBg);
+        window.draw(speedSliderLabel);
+        window.draw(speedKnob);
 
         for (int i = 0; i < 4; ++i) {
             auto& btn = sortButtons[i].first;
             auto& txt = sortButtons[i].second;
-            btn.setSize({ 180, 40 });
-            btn.setPosition({ win_width / 2 - 90, 180 + i * 55 });
             btn.setFillColor(selectedSort == static_cast<SortType>(i + 1)
                 ? sf::Color(100, 200, 255, 220)
-                : sf::Color(220, 220, 220, 220));
-            btn.setOutlineThickness(1);
-            btn.setOutlineColor(sf::Color(180, 180, 180));
+                : sf::Color(220, 220, 220));
             window.draw(btn);
-
-            txt.setFillColor(sf::Color(30, 30, 30));
-            txt.setPosition({ win_width / 2 - 70, 190 + i * 55 });
             window.draw(txt);
         }
 
-        resetButton.setSize({ 180, 40 });
-        resetButton.setPosition({ win_width / 2 - 90, 410 });
-        resetButton.setFillColor(sf::Color(255, 220, 220, 220));
-        resetButton.setOutlineThickness(1);
-        resetButton.setOutlineColor(sf::Color(180, 180, 180));
-        window.draw(resetButton);
-
-        resetText.setFillColor(sf::Color(30, 30, 30));
-        resetText.setPosition({ win_width / 2 - 35, 420 });
-        window.draw(resetText);
-
-        sf::RectangleShape sizePanel({ 170, 70 });
-        sizePanel.setFillColor(sf::Color(30, 30, 40, 200));
-        sizePanel.setOutlineColor(sf::Color(100, 200, 255, 120));
-        sizePanel.setOutlineThickness(1);
-        sizePanel.setPosition({ win_width - 190, 15 });
-        window.draw(sizePanel);
-
-        window.draw(plusSizeBtn);
-        window.draw(plusSizeText);
-        window.draw(minusSizeBtn);
-        window.draw(minusSizeText);
-        sizeLabel.setString("Size: " + std::to_string(n));
-        sizeLabel.setFillColor(sf::Color(220, 220, 255));
-        sizeLabel.setPosition({ win_width - 180, 22 });
-        window.draw(sizeLabel);
-
-        window.draw(plusSpeedBtn);
-        window.draw(plusSpeedText);
-        window.draw(minusSpeedBtn);
-        window.draw(minusSpeedText);
-        speedLabel.setString("Speed: " + std::to_string(speed));
-        speedLabel.setFillColor(sf::Color(220, 220, 255));
-        speedLabel.setPosition({ win_width - 180, 62 });
-        window.draw(speedLabel);
-
-        // --- Draw Size Slider ---
-        sf::RectangleShape sizeSliderBg({sliderWidth, sliderHeight});
-        sizeSliderBg.setFillColor(sf::Color(80, 80, 120));
-        sizeSliderBg.setPosition({80, sliderY1 - sliderHeight / 2});
-        window.draw(sizeSliderBg);
-
-        float sizeKnobX = 80 + ((n - min_n) / float(max_n - min_n)) * sliderWidth;
-        sf::CircleShape sizeKnob(knobRadius);
-        sizeKnob.setFillColor(sf::Color(100, 200, 255));
-        sizeKnob.setOrigin({knobRadius, knobRadius});
-        sizeKnob.setPosition({sizeKnobX, sliderY1});
-        window.draw(sizeKnob);
-
-        sf::Text sizeSliderLabel(font);
-        sizeSliderLabel.setString("Array Size: " + std::to_string(n));
-        sizeSliderLabel.setCharacterSize(18);
-        sizeSliderLabel.setFillColor(sf::Color(220, 220, 255));
-        sizeSliderLabel.setPosition({80, sliderY1 - 32});
-        window.draw(sizeSliderLabel);
-
-        // --- Draw Speed Slider ---
-        sf::RectangleShape speedSliderBg({sliderWidth, sliderHeight});
-        speedSliderBg.setFillColor(sf::Color(80, 80, 120));
-        speedSliderBg.setPosition({80, sliderY2 - sliderHeight / 2});
-        window.draw(speedSliderBg);
-
-        float speedKnobX = 80 + ((speed - min_speed) / float(max_speed - min_speed)) * sliderWidth;
-        sf::CircleShape speedKnob(knobRadius);
-        speedKnob.setFillColor(sf::Color(180, 120, 255));
-        speedKnob.setOrigin({knobRadius, knobRadius});
-        speedKnob.setPosition({speedKnobX, sliderY2});
-        window.draw(speedKnob);
-
-        sf::Text speedSliderLabel(font);
-        speedSliderLabel.setString("Speed: " + std::to_string(speed));
-        speedSliderLabel.setCharacterSize(18);
-        speedSliderLabel.setFillColor(sf::Color(220, 220, 255));
-        speedSliderLabel.setPosition({80, sliderY2 - 32});
-        window.draw(speedSliderLabel);
-
-        // --- Only draw bars if visible ---
         if (barsVisible) {
             for (const auto& rect : rectangles) {
                 window.draw(rect);
@@ -394,23 +266,20 @@ int main() {
         window.display();
 
         if (sortingStarted) {
-            barsVisible = true; // Show bars after Start is pressed
+            barsVisible = true;
             switch (selectedSort) {
-                case SortType::Bubble:
-                    bubble_sort(arr.data(), rectangles, window, win_height, sortingSound, speed);
-                    break;
-                case SortType::Selection:
-                    selection_sort(arr.data(), rectangles, window, win_height, sortingSound, speed);
-                    break;
-                case SortType::Insertion:
-                    insertion_sort(arr.data(), rectangles, window, win_height, sortingSound, speed);
-                    break;
-                case SortType::Merge:
-                    merge_sort_visualization(arr.data(), rectangles, window, win_height, 0, n - 1, sortingSound, speed);
-                    break;
-                default:
-                    bubble_sort(arr.data(), rectangles, window, win_height, sortingSound, speed);
+            case SortType::Bubble:
+                bubble_sort(arr.data(), rectangles, window, win_height, sortingSound, speed); break;
+            case SortType::Selection:
+                selection_sort(arr.data(), rectangles, window, win_height, sortingSound, speed); break;
+            case SortType::Insertion:
+                insertion_sort(arr.data(), rectangles, window, win_height, sortingSound, speed); break;
+            case SortType::Merge:
+                merge_sort_visualization(arr.data(), rectangles, window, win_height, 0, n - 1, sortingSound, speed); break;
+            default:
+                bubble_sort(arr.data(), rectangles, window, win_height, sortingSound, speed); break;
             }
+            barsVisible = false;
             sortingStarted = false;
         }
     }
