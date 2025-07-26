@@ -125,25 +125,7 @@ Run the executable:
 
 ---
 
-## 📁 Project Structure
 
-```
-Sorting-Visualizer/
-├── assets/              # Images and demo media
-├── include/             
-│   ├── Sorting.hpp      # Sorting algorithms & utilities
-│   ├── draw.hpp         # Rendering helpers
-│   └── logic.hpp        # Visualization logic
-├── src/                 
-│   └── main.cpp         # Application entry point and UI logic
-├── beep.wav             # Audio file for feedback
-├── arial.ttf            # Font file for text
-├── CMakeLists.txt       # CMake build script
-├── build/               # CMake build output (gitignored)
-└── README.md            # Project documentation
-```
-
----
 
 ## 🤝 Contributing
 
